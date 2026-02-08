@@ -1,17 +1,19 @@
 <div align="center">
-  <img src="assets/logo.png" width="160" alt="Kaku Logo" />
+  <img src="assets/logo.png" width="120" alt="Kaku Logo" />
   <h1>Kaku</h1>
   <p><em>A fast, out-of-the-box terminal built for AI coding.</em></p>
 </div>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/platform-macOS-lightgrey.svg?style=flat-square" alt="Platform">
-  <img src="https://img.shields.io/badge/built%20with-Rust-orange.svg?style=flat-square" alt="Rust">
-  <img src="https://img.shields.io/badge/license-MIT-blue.svg?style=flat-square" alt="License">
+  <a href="https://github.com/tw93/Kaku/stargazers"><img src="https://img.shields.io/github/stars/tw93/Kaku?style=flat-square" alt="Stars"></a>
+  <a href="https://github.com/tw93/Kaku/releases"><img src="https://img.shields.io/github/v/tag/tw93/Kaku?label=version&style=flat-square" alt="Version"></a>
+  <a href="LICENSE.md"><img src="https://img.shields.io/badge/license-MIT-blue.svg?style=flat-square" alt="License"></a>
+  <a href="https://github.com/tw93/Kaku/commits"><img src="https://img.shields.io/github/commit-activity/m/tw93/Kaku?style=flat-square" alt="Commits"></a>
+  <a href="https://twitter.com/HiTw93"><img src="https://img.shields.io/badge/follow-Tw93-red?style=flat-square&logo=Twitter" alt="Twitter"></a>
 </p>
 
 <p align="center">
-  <img src="assets/kaku.png" alt="Kaku Screenshot" width="1000" />
+  <img src="assets/kaku.png" alt="Kaku Screenshot" width="800" />
   <br/>
   Kaku is a deeply customized fork of <a href="https://github.com/wez/wezterm">WezTerm</a>, designed for an <b>out-of-the-box</b> experience.
 </p>
@@ -28,16 +30,15 @@
 
 ### Install
 
-1. 👉 [**Download Kaku DMG**](https://github.com/tw93/Kaku/releases/latest)
-2. Open `Kaku.dmg` & Drag to Applications
-3. Right-click Open (to bypass security check)
+1. 👉 [**Download Kaku DMG**](https://github.com/tw93/Kaku/releases/latest) & Drag to Applications
+2. Open Kaku - Right-click Open if blocked
+3. Run `sudo xattr -d com.apple.quarantine /Applications/Kaku.app` if needed
 
-**Quick fix if blocked:** `sudo xattr -d com.apple.quarantine /Applications/Kaku.app`
+> On first launch, Kaku will offer to set up your shell environment automatically.
 
 ### First Run Experience
 
 When you launch Kaku for the first time, it will offer to automatically configure your shell environment:
-
 - **Starship Prompt**: Fast, customizable, and cross-shell.
 - **z**: Smart directory jumper.
 - **Autosuggestions**: Type less, code faster.
@@ -73,21 +74,11 @@ Kaku includes `z` (powered by **zoxide**), a smarter way to navigate directories
 - **Interactive selection**: `zi foo` (select from list)
 - **Go back**: `z -`
 
-### Useful Aliases
-
-Common aliases are pre-configured for productivity:
-
-- `ll`: List files (detailed)
-- `la`: List all files (including hidden)
-- `...`: Go up 2 directories (`cd ../..`)
-- `g`: Git short command
-
 ## Configuration
 
 Kaku uses a prioritized configuration system to ensure stability while allowing customization.
 
 **Config Load Order:**
-
 1. **Environment Variable**: `KAKU_CONFIG_FILE` (if set)
 2. **Bundled Config**: `Kaku.app/Contents/Resources/kaku.lua` (Default experience)
 3. **User Config**: `~/.kaku.lua` or `~/.config/kaku/kaku.lua`
@@ -119,6 +110,14 @@ rm -rf dist target
 ```
 
 > **Note**: The build script is macOS-only and requires Rust/Cargo installed.
+
+## Support
+
+- If Kaku helped you, star the repo or [share it](https://twitter.com/intent/tweet?url=https://github.com/tw93/Kaku&text=Kaku%20-%20A%20fast,%20out-of-the-box%20terminal%20built%20for%20AI%20coding.) with friends.
+- Got ideas or found bugs? Open an issue or PR.
+- Like Kaku? <a href="https://miaoyan.app/cats.html?name=Kaku" target="_blank">Buy Tw93 a Coke</a> to support the project! 🥤 Supporters below.
+
+<a href="https://miaoyan.app/cats.html?name=Kaku"><img src="https://miaoyan.app/assets/sponsors.svg" width="1000" loading="lazy" /></a>
 
 ## License
 
