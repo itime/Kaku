@@ -383,9 +383,9 @@ pub fn create_user_owned_dirs(p: &Path) -> anyhow::Result<()> {
 }
 
 fn xdg_config_home() -> PathBuf {
-    match std::env::var_os("XDG_CONFIG_HOME").map(|s| PathBuf::from(s).join("wezterm")) {
+    match std::env::var_os("XDG_CONFIG_HOME").map(|s| PathBuf::from(s).join("kaku")) {
         Some(p) => p,
-        None => HOME_DIR.join(".config").join("wezterm"),
+        None => HOME_DIR.join(".config").join("kaku"),
     }
 }
 
@@ -395,7 +395,7 @@ fn config_dirs() -> Vec<PathBuf> {
 
     #[cfg(unix)]
     if let Some(d) = std::env::var_os("XDG_CONFIG_DIRS") {
-        dirs.extend(std::env::split_paths(&d).map(|s| PathBuf::from(s).join("wezterm")));
+        dirs.extend(std::env::split_paths(&d).map(|s| PathBuf::from(s).join("kaku")));
     }
 
     dirs
@@ -561,7 +561,7 @@ impl ConfigInner {
     }
 
     fn accumulate_watch_paths(lua: &Lua, watch_paths: &mut Vec<PathBuf>) {
-        if let Ok(mlua::Value::Table(tbl)) = lua.named_registry_value("wezterm-watch-paths") {
+        if let Ok(mlua::Value::Table(tbl)) = lua.named_registry_value("kaku-watch-paths") {
             for path in tbl.sequence_values::<String>() {
                 if let Ok(path) = path {
                     watch_paths.push(PathBuf::from(path));

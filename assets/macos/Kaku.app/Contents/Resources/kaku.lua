@@ -1,29 +1,14 @@
--- WezTerm Configuration
+-- Kaku Configuration
 
 local wezterm = require 'wezterm'
-local resurrect = wezterm.plugin.require("https://github.com/MLFlexer/resurrect.wezterm")
+
 local config = {}
 
 if wezterm.config_builder then
   config = wezterm.config_builder()
 end
 
--- ===== Session Management (Resurrect Plugin) =====
-resurrect.state_manager.set_max_nlines(10000)
 
--- Auto-save workspace every 5 minutes
-wezterm.on('window-config-reloaded', function()
-  if wezterm.GLOBAL.resurrect_autosave_started then
-    return
-  end
-  wezterm.GLOBAL.resurrect_autosave_started = true
-
-  local function save_workspace()
-    resurrect.state_manager.save_state(resurrect.workspace_state.get_workspace_state())
-    wezterm.time.call_after(300, save_workspace)
-  end
-  wezterm.time.call_after(300, save_workspace)
-end)
 
 local function basename(path)
   return path:match('([^/]+)$')
@@ -155,7 +140,7 @@ end)
 -- ===== Font =====
 config.font = wezterm.font_with_fallback({
   'JetBrains Mono',
-  'PingFang SC',
+  { family = 'PingFang SC', weight = 'Medium' },
   { family = 'Apple Color Emoji', assume_emoji_presentation = true },
 })
 
@@ -166,11 +151,14 @@ config.cell_width = 1.0
 config.harfbuzz_features = { 'calt=0', 'clig=0', 'liga=0' }
 config.use_cap_height_to_scale_fallback_fonts = false
 
+config.freetype_load_target = 'Normal'
+-- config.freetype_render_target = 'HorizontalLcd'
+
 config.allow_square_glyphs_to_overflow_width = 'WhenFollowedBySpace'
 config.custom_block_glyphs = true
 
-config.freetype_load_target = 'Normal'
-config.freetype_render_target = 'HorizontalLcd'
+-- config.freetype_load_target = 'Normal'
+-- config.freetype_render_target = 'HorizontalLcd'
 
 -- ===== Cursor =====
 config.default_cursor_style = 'BlinkingBar'
@@ -540,28 +528,7 @@ config.keys = {
     action = wezterm.action.SendString('\n'),
   },
 
-  -- Resurrect plugin keybindings
-  {
-    key = 's',
-    mods = 'CMD|SHIFT',
-    action = wezterm.action_callback(function()
-      resurrect.save_state(resurrect.workspace_state.get_workspace_state())
-    end),
-  },
-  {
-    key = 'l',
-    mods = 'CMD|SHIFT',
-    action = wezterm.action_callback(function(win, pane)
-      resurrect.fuzzy_load(win, pane, function(id)
-        local state = resurrect.load_state(id, "workspace")
-        resurrect.workspace_state.restore_workspace(state, {
-          relative = true,
-          restore_text = true,
-          on_pane_restore = resurrect.tab_state.default_on_pane_restore,
-        })
-      end)
-    end),
-  },
+
 }
 
 -- Copy on select (equivalent to Kitty's copy_on_select)
@@ -570,6 +537,11 @@ config.mouse_bindings = {
     event = { Up = { streak = 1, button = 'Left' } },
     mods = 'NONE',
     action = wezterm.action.CompleteSelectionOrOpenLinkAtMouseCursor('ClipboardAndPrimarySelection'),
+  },
+  {
+    event = { Up = { streak = 1, button = 'Left' } },
+    mods = 'CMD',
+    action = wezterm.action.OpenLinkAtMouseCursor,
   },
 }
 

@@ -53,11 +53,11 @@ Kaku uses a prioritized configuration system to ensure stability while allowing 
 
 **Config Load Order:**
 
-1. **Environment Variable**: `WEZTERM_CONFIG_FILE` (if set)
-2. **Bundled Config**: `Kaku.app/Contents/Resources/wezterm.lua` (Default experience)
-3. **User Config**: `~/.wezterm.lua` or `~/.config/wezterm/wezterm.lua`
+1. **Environment Variable**: `KAKU_CONFIG_FILE` (if set)
+2. **Bundled Config**: `Kaku.app/Contents/Resources/kaku.lua` (Default experience)
+3. **User Config**: `~/.kaku.lua` or `~/.config/kaku/kaku.lua`
 
-To customize Kaku, simply create a `~/.wezterm.lua` file. It will override the bundled defaults where specified.
+To customize Kaku, simply create a `~/.kaku.lua` file. It will override the bundled defaults where specified.
 
 ## Development
 

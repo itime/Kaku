@@ -42,8 +42,7 @@ mkdir -p "$APP_BUNDLE_OUT/Contents/Resources"
 echo "[3/5] Copying resources and binaries..."
 cp -R assets/shell-integration/* "$APP_BUNDLE_OUT/Contents/Resources/"
 cp -R assets/shell-completion "$APP_BUNDLE_OUT/Contents/Resources/"
-# Fonts are embedded in the binary via wezterm-font, no need to copy them
-# cp -R assets/fonts "$APP_BUNDLE_OUT/Contents/Resources/"
+cp -R assets/fonts "$APP_BUNDLE_OUT/Contents/Resources/"
 cp assets/logo.icns "$APP_BUNDLE_OUT/Contents/Resources/AppIcon.icns"
 tic -xe kaku -o "$APP_BUNDLE_OUT/Contents/Resources/terminfo" termwiz/data/kaku.terminfo
 
