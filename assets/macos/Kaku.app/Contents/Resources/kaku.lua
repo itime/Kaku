@@ -311,11 +311,18 @@ config.keys = {
     action = wezterm.action.SpawnWindow,
   },
 
-  -- Cmd+W: close current pane
+  -- Cmd+W: close current pane (smart)
   {
     key = 'w',
     mods = 'CMD',
-    action = wezterm.action.CloseCurrentPane({ confirm = false }),
+    action = wezterm.action_callback(function(win, pane)
+      local tab = win:active_tab()
+      if #tab:panes() > 1 then
+        win:perform_action(wezterm.action.CloseCurrentPane { confirm = false }, pane)
+      else
+        win:perform_action(wezterm.action.CloseCurrentTab { confirm = false }, pane)
+      end
+    end),
   },
 
   -- Cmd+Shift+W: close current tab
