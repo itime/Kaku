@@ -1,7 +1,7 @@
 [package]
 name = "kaku"
 version = "0.1.0"
-authors = ["Wez Furlong <wez@wezfurlong.org>"]
+authors = ["Tw93 <hitw93@gmail.com>"]
 edition = "2018"
 publish = false
 
