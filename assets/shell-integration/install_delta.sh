@@ -59,16 +59,22 @@ echo -n "  Configuring git... "
 git config --global core.pager "delta"
 git config --global interactive.diffFilter "delta --color-only"
 git config --global delta.navigate true
+git config --global delta.pager "less --mouse --wheel-lines=3 -R -F -X"
 git config --global delta.line-numbers true
 git config --global delta.side-by-side true
 git config --global delta.line-fill-method "spaces"
 echo -e "${GREEN}✓${NC}"
 
 # Set delta theme
-echo -n "  Applying Kaku theme... "
-git config --global delta.syntax-theme "Nord"
-git config --global delta.file-style "bold yellow"
-git config --global delta.file-decoration-style "yellow box"
+echo -n "  Applying Kaku-aligned style... "
+git config --global delta.syntax-theme "none"
+git config --global delta.file-style "bold blue"
+git config --global delta.file-decoration-style "blue box"
+git config --global delta.file-added-label "ADD"
+git config --global delta.file-copied-label "CPY"
+git config --global delta.file-modified-label "MOD"
+git config --global delta.file-removed-label "DEL"
+git config --global delta.file-renamed-label "REN"
 git config --global delta.hunk-header-style "file line-number syntax"
 git config --global delta.line-numbers-left-style "cyan"
 git config --global delta.line-numbers-right-style "cyan"
