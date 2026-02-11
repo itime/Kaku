@@ -5,6 +5,15 @@
 
 set -euo pipefail
 
+UPDATE_ONLY=false
+for arg in "$@"; do
+	case "$arg" in
+	--update-only)
+		UPDATE_ONLY=true
+		;;
+	esac
+done
+
 # Colors
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -15,6 +24,23 @@ NC='\033[0m'
 
 # Configuration
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+# Thin entrypoint: delegate to `kaku init` whenever possible.
+# The rust command owns wrapper installation and orchestration.
+if [[ "${KAKU_INIT_INTERNAL:-0}" != "1" ]]; then
+	if [[ -n "${KAKU_BIN:-}" && -x "${KAKU_BIN}" ]]; then
+		exec "${KAKU_BIN}" init "$@"
+	fi
+
+	for candidate in \
+		"$SCRIPT_DIR/../MacOS/kaku" \
+		"/Applications/Kaku.app/Contents/MacOS/kaku" \
+		"$HOME/Applications/Kaku.app/Contents/MacOS/kaku"; do
+		if [[ -x "$candidate" ]]; then
+			exec "$candidate" init "$@"
+		fi
+	done
+fi
 
 # Resolve resources by script location first so setup works regardless of app install path.
 # - App bundle:   setup_zsh.sh in Resources/, vendor in Resources/vendor
@@ -292,4 +318,6 @@ configure_touchid() {
 	fi
 }
 
-configure_touchid
+if [[ "$UPDATE_ONLY" != "true" ]]; then
+	configure_touchid
+fi
