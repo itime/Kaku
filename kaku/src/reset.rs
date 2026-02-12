@@ -1,6 +1,7 @@
 use anyhow::{anyhow, bail, Context};
 use clap::Parser;
 use std::io::{self, IsTerminal, Write};
+use std::os::unix::process::CommandExt;
 use std::path::{Path, PathBuf};
 use std::process::{Command, Stdio};
 
@@ -107,6 +108,33 @@ mod imp {
         remove_empty_kaku_config_dir(&mut report)?;
 
         report.print();
+
+        println!("\n⚠️  Shell restart required.");
+        println!("ℹ️  Tools preserved in ~/.config/kaku/zsh/\n");
+
+        if !yes && io::stdin().is_terminal() {
+            print!("Restart shell now? [Y/n] ");
+            io::stdout().flush().context("flush stdout")?;
+
+            let mut input = String::new();
+            io::stdin()
+                .read_line(&mut input)
+                .context("read restart confirmation")?;
+
+            let answer = input.trim().to_ascii_lowercase();
+            if answer.is_empty() || answer == "y" || answer == "yes" {
+                println!("\nRestarting shell... 👋");
+                println!("Tip: Run 'kaku init' to restore integration");
+                let shell = std::env::var("SHELL").unwrap_or_else(|_| "/bin/zsh".to_string());
+                let err = std::process::Command::new(&shell).arg("-l").exec();
+                bail!("failed to restart shell: {}", err);
+            } else {
+                println!("\nRun 'exec zsh' when ready. Restore with 'kaku init'");
+            }
+        } else {
+            println!("Run 'exec zsh' to restart. Restore with 'kaku init'");
+        }
+
         Ok(())
     }
 
@@ -183,8 +211,15 @@ mod imp {
     }
 
     fn remove_kaku_shell_dir(report: &mut ResetReport) -> anyhow::Result<()> {
-        let shell_dir = config_home().join("zsh");
-        remove_dir_if_exists(shell_dir, "removed Kaku shell directory", report)
+        let kaku_init = config_home().join("zsh").join("kaku.zsh");
+        if kaku_init.exists() {
+            std::fs::remove_file(&kaku_init)
+                .with_context(|| format!("remove {}", kaku_init.display()))?;
+            report.changed(format!("removed {}", kaku_init.display()));
+        } else {
+            report.skipped(format!("{} not found", kaku_init.display()));
+        }
+        Ok(())
     }
 
     fn cleanup_git_delta_defaults(report: &mut ResetReport) -> anyhow::Result<()> {
