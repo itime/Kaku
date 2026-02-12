@@ -59,7 +59,7 @@ static APP_TERMINATING: AtomicBool = AtomicBool::new(false);
 #[allow(non_upper_case_globals)]
 const NSViewLayerContentsPlacementTopLeft: NSInteger = 11;
 #[allow(non_upper_case_globals)]
-const NSViewLayerContentsRedrawDuringViewResize: NSInteger = 2;
+const NSViewLayerContentsRedrawBeforeViewResize: NSInteger = 3;
 
 #[link(name = "CoreGraphics", kind = "framework")]
 extern "C" {
@@ -674,6 +674,7 @@ impl Window {
                 ime_state: ImeDisposition::None,
                 ime_last_event: None,
                 live_resizing: false,
+                in_fullscreen_transition: false,
                 ime_text: String::new(),
             }));
 
@@ -743,7 +744,7 @@ impl Window {
             view.setWantsLayer(YES);
             let () = msg_send![
                 *view,
-                setLayerContentsRedrawPolicy: NSViewLayerContentsRedrawDuringViewResize
+                setLayerContentsRedrawPolicy: NSViewLayerContentsRedrawBeforeViewResize
             ];
 
             // register for drag and drop operations.
@@ -1725,6 +1726,7 @@ struct Inner {
 
     /// Whether we're in live resize
     live_resizing: bool,
+    in_fullscreen_transition: bool,
 
     ime_text: String,
 }
@@ -3069,6 +3071,32 @@ impl WindowView {
         }
     }
 
+    extern "C" fn will_enter_fullscreen(this: &mut Object, _sel: Sel, _notification: id) {
+        if let Some(this) = Self::get_this(this) {
+            this.inner.borrow_mut().in_fullscreen_transition = true;
+        }
+    }
+
+    extern "C" fn did_enter_fullscreen(this: &mut Object, _sel: Sel, _notification: id) {
+        if let Some(this_ref) = Self::get_this(this) {
+            this_ref.inner.borrow_mut().in_fullscreen_transition = false;
+        }
+        Self::did_resize(this, _sel, _notification);
+    }
+
+    extern "C" fn will_exit_fullscreen(this: &mut Object, _sel: Sel, _notification: id) {
+        if let Some(this) = Self::get_this(this) {
+            this.inner.borrow_mut().in_fullscreen_transition = true;
+        }
+    }
+
+    extern "C" fn did_exit_fullscreen(this: &mut Object, _sel: Sel, _notification: id) {
+        if let Some(this_ref) = Self::get_this(this) {
+            this_ref.inner.borrow_mut().in_fullscreen_transition = false;
+        }
+        Self::did_resize(this, _sel, _notification);
+    }
+
     extern "C" fn did_end_live_resize(this: &mut Object, _sel: Sel, _notification: id) {
         if let Some(this) = Self::get_this(this) {
             let mut inner = this.inner.borrow_mut();
@@ -3085,6 +3113,12 @@ impl WindowView {
     }
 
     extern "C" fn did_resize(this: &mut Object, _sel: Sel, _notification: id) {
+        let in_fullscreen_transition = if let Some(this) = Self::get_this(this) {
+            this.inner.borrow().in_fullscreen_transition
+        } else {
+            false
+        };
+
         if let Some(this) = Self::get_this(this) {
             let inner = this.inner.borrow_mut();
 
@@ -3113,7 +3147,10 @@ impl WindowView {
                     style_mask.contains(NSWindowStyleMask::NSFullScreenWindowMask)
                 });
 
-            let live_resizing = inner.live_resizing;
+            // During fullscreen transition, treat as live resizing to allow
+            // smooth font scaling updates as the window animates, preventing
+            // the text from appearing too large/small during the transition.
+            let live_resizing = inner.live_resizing || in_fullscreen_transition;
 
             // Note: isZoomed can falsely return YES in situations such as
             // the current screen changing. We cannot detect that case here.
@@ -3457,6 +3494,22 @@ impl WindowView {
             cls.add_method(
                 sel!(windowDidEndLiveResize:),
                 Self::did_end_live_resize as extern "C" fn(&mut Object, Sel, id),
+            );
+            cls.add_method(
+                sel!(windowWillEnterFullScreen:),
+                Self::will_enter_fullscreen as extern "C" fn(&mut Object, Sel, id),
+            );
+            cls.add_method(
+                sel!(windowDidEnterFullScreen:),
+                Self::did_enter_fullscreen as extern "C" fn(&mut Object, Sel, id),
+            );
+            cls.add_method(
+                sel!(windowWillExitFullScreen:),
+                Self::will_exit_fullscreen as extern "C" fn(&mut Object, Sel, id),
+            );
+            cls.add_method(
+                sel!(windowDidExitFullScreen:),
+                Self::did_exit_fullscreen as extern "C" fn(&mut Object, Sel, id),
             );
             cls.add_method(
                 sel!(windowDidResize:),
