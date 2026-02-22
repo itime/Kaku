@@ -67,6 +67,12 @@ pub struct Config {
     #[dynamic(try_from = "crate::units::OptPixelUnit", default)]
     pub cursor_thickness: Option<Dimension>,
 
+    /// The height of the cursor as a fraction of the cell height.
+    /// Defaults to 1.0 (full cell height). Values between 0.0 and 1.0
+    /// will make the cursor shorter, which can look better when line_height > 1.0.
+    #[dynamic(default = "default_one_point_oh_f64", validate = "validate_cursor_height")]
+    pub cursor_height: f64,
+
     #[dynamic(try_from = "crate::units::OptPixelUnit", default)]
     pub underline_thickness: Option<Dimension>,
 
@@ -2275,6 +2281,16 @@ fn validate_line_height(value: &f64) -> Result<(), String> {
     if *value <= 0.0 {
         Err(format!(
             "Illegal value {value} for line_height; it must be positive and greater than zero!"
+        ))
+    } else {
+        Ok(())
+    }
+}
+
+fn validate_cursor_height(value: &f64) -> Result<(), String> {
+    if *value <= 0.0 || *value > 1.0 {
+        Err(format!(
+            "Illegal value {value} for cursor_height; it must be between 0.0 (exclusive) and 1.0 (inclusive)!"
         ))
     } else {
         Ok(())

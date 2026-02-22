@@ -5,7 +5,7 @@ use ::window::color::SrgbaPixel;
 use config::DimensionContext;
 use std::ops::Range;
 use termwiz::surface::CursorShape;
-use tiny_skia::{BlendMode, FillRule, Paint, Path, PathBuilder, PixmapMut, Stroke, Transform};
+use tiny_skia::{BlendMode, FillRule, LineCap, LineJoin, Paint, Path, PathBuilder, PixmapMut, Stroke, Transform};
 use wezterm_font::units::{IntPixelLength, PixelLength};
 use window::{BitmapImage, Image, Point, Rect, Size};
 
@@ -5067,6 +5067,9 @@ impl GlyphCache {
             }) as isize;
         }
 
+        // Get cursor_height config (0.0 < cursor_height <= 1.0)
+        let cursor_height_ratio = self.fonts.config().cursor_height;
+
         let mut buffer = Image::new(
             metrics.cell_size.width as usize,
             metrics.cell_size.height as usize,
@@ -5075,61 +5078,105 @@ impl GlyphCache {
         let cell_rect = Rect::new(Point::new(0, 0), metrics.cell_size);
         buffer.clear_rect(cell_rect, black);
 
+        // Calculate pixel positions for cursor height adjustment
+        let cell_height = metrics.cell_size.height as f32;
+        let cursor_pixel_height = cell_height * cursor_height_ratio as f32;
+        let y_offset = (cell_height - cursor_pixel_height) / 2.0;
+        let y_start = y_offset;
+        let y_end = y_offset + cursor_pixel_height;
+
         match shape {
             None => {}
             Some(CursorShape::Default) => {
                 buffer.clear_rect(cell_rect, SrgbaPixel::rgba(0xff, 0xff, 0xff, 0xff));
             }
             Some(CursorShape::BlinkingBlock | CursorShape::SteadyBlock) => {
-                self.draw_polys(
-                    &metrics,
-                    &[Poly {
-                        path: &[
-                            PolyCommand::MoveTo(BlockCoord::Zero, BlockCoord::Zero),
-                            PolyCommand::LineTo(BlockCoord::One, BlockCoord::Zero),
-                            PolyCommand::LineTo(BlockCoord::One, BlockCoord::One),
-                            PolyCommand::LineTo(BlockCoord::Zero, BlockCoord::One),
-                            PolyCommand::LineTo(BlockCoord::Zero, BlockCoord::Zero),
-                        ],
-                        intensity: BlockAlpha::Full,
-                        style: PolyStyle::OutlineHeavy,
-                    }],
-                    &mut buffer,
-                    PolyAA::AntiAlias,
-                    BlendMode::default(),
-                );
+                // Draw block cursor outline using tiny_skia directly
+                let (img_width, img_height) = buffer.image_dimensions();
+                let mut pixmap =
+                    PixmapMut::from_bytes(buffer.pixel_data_slice_mut(), img_width as u32, img_height as u32)
+                        .expect("make pixmap from existing bitmap");
+
+                let mut paint = Paint::default();
+                paint.set_color(tiny_skia::Color::WHITE);
+                paint.anti_alias = true;
+                paint.force_hq_pipeline = true;
+
+                let stroke_width = metrics.underline_height as f32;
+                let half_stroke = stroke_width / 2.0;
+
+                let mut pb = PathBuilder::new();
+                pb.move_to(half_stroke, y_start + half_stroke);
+                pb.line_to(img_width as f32 - half_stroke, y_start + half_stroke);
+                pb.line_to(img_width as f32 - half_stroke, y_end - half_stroke);
+                pb.line_to(half_stroke, y_end - half_stroke);
+                pb.close();
+
+                if let Some(path) = pb.finish() {
+                    let stroke = Stroke {
+                        width: stroke_width,
+                        line_cap: LineCap::Square,
+                        line_join: LineJoin::Miter,
+                        ..Default::default()
+                    };
+                    pixmap.stroke_path(&path, &paint, &stroke, Transform::identity(), None);
+                }
             }
             Some(CursorShape::BlinkingBar | CursorShape::SteadyBar) => {
-                self.draw_polys(
-                    &metrics,
-                    &[Poly {
-                        path: &[
-                            PolyCommand::MoveTo(BlockCoord::Zero, BlockCoord::Zero),
-                            PolyCommand::LineTo(BlockCoord::Zero, BlockCoord::One),
-                        ],
-                        intensity: BlockAlpha::Full,
-                        style: PolyStyle::OutlineHeavy,
-                    }],
-                    &mut buffer,
-                    PolyAA::AntiAlias,
-                    BlendMode::default(),
-                );
+                // Draw bar cursor using tiny_skia directly
+                let (img_width, img_height) = buffer.image_dimensions();
+                let mut pixmap =
+                    PixmapMut::from_bytes(buffer.pixel_data_slice_mut(), img_width as u32, img_height as u32)
+                        .expect("make pixmap from existing bitmap");
+
+                let mut paint = Paint::default();
+                paint.set_color(tiny_skia::Color::WHITE);
+                paint.anti_alias = true;
+                paint.force_hq_pipeline = true;
+
+                let stroke_width = metrics.underline_height as f32;
+                let half_stroke = stroke_width / 2.0;
+
+                let mut pb = PathBuilder::new();
+                pb.move_to(half_stroke, y_start);
+                pb.line_to(half_stroke, y_end);
+
+                if let Some(path) = pb.finish() {
+                    let stroke = Stroke {
+                        width: stroke_width,
+                        line_cap: LineCap::Square,
+                        ..Default::default()
+                    };
+                    pixmap.stroke_path(&path, &paint, &stroke, Transform::identity(), None);
+                }
             }
             Some(CursorShape::BlinkingUnderline | CursorShape::SteadyUnderline) => {
-                self.draw_polys(
-                    &metrics,
-                    &[Poly {
-                        path: &[
-                            PolyCommand::MoveTo(BlockCoord::Zero, BlockCoord::One),
-                            PolyCommand::LineTo(BlockCoord::One, BlockCoord::One),
-                        ],
-                        intensity: BlockAlpha::Full,
-                        style: PolyStyle::OutlineHeavy,
-                    }],
-                    &mut buffer,
-                    PolyAA::AntiAlias,
-                    BlendMode::default(),
-                );
+                // Draw underline cursor using tiny_skia directly
+                let (img_width, img_height) = buffer.image_dimensions();
+                let mut pixmap =
+                    PixmapMut::from_bytes(buffer.pixel_data_slice_mut(), img_width as u32, img_height as u32)
+                        .expect("make pixmap from existing bitmap");
+
+                let mut paint = Paint::default();
+                paint.set_color(tiny_skia::Color::WHITE);
+                paint.anti_alias = true;
+                paint.force_hq_pipeline = true;
+
+                let stroke_width = metrics.underline_height as f32;
+                let half_stroke = stroke_width / 2.0;
+
+                let mut pb = PathBuilder::new();
+                pb.move_to(0.0, y_end - half_stroke);
+                pb.line_to(img_width as f32, y_end - half_stroke);
+
+                if let Some(path) = pb.finish() {
+                    let stroke = Stroke {
+                        width: stroke_width,
+                        line_cap: LineCap::Square,
+                        ..Default::default()
+                    };
+                    pixmap.stroke_path(&path, &paint, &stroke, Transform::identity(), None);
+                }
             }
         }
 
